@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Placement Dashboard</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    background: #0f172a;
+    color: white;
+}
+
+/* SIDEBAR */
+.sidebar {
+    position: fixed;
+    width: 60px;
+    height: 100%;
+    background: #1e293b;
+    overflow: hidden;
+    transition: 0.3s;
+}
+
+.sidebar:hover {
+    width: 200px;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    cursor: pointer;
+}
+
+.menu-item:hover {
+    background: #38bdf8;
+    color: black;
+}
+
+.icon {
+    font-size: 20px;
+    width: 40px;
+    text-align: center;
+}
+
+.text {
+    opacity: 0;
+    transition: 0.3s;
+}
+
+.sidebar:hover .text {
+    opacity: 1;
+}
+
+/* MAIN */
+.main {
+    margin-left: 60px;
+    padding: 20px;
+    transition: 0.3s;
+}
+
+.sidebar:hover ~ .main {
+    margin-left: 200px;
+}
+
+/* CARD */
+.card {
+    background: #1e293b;
+    padding: 20px;
+    margin: 20px 0;
+    border-radius: 10px;
+}
+
+input, button {
+    padding: 8px;
+    margin: 5px;
+    border-radius: 6px;
+    border: none;
+}
+
+button.action {
+    background: #38bdf8;
+    cursor: pointer;
+}
+
+button.action:hover {
+    background: #0ea5e9;
+}
+
+table {
+    width: 90%;
+    margin: auto;
+    border-collapse: collapse;
+}
+
+th, td {
+    border: 1px solid white;
+    padding: 8px;
+}
+
+/* TOAST */
+#toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    opacity: 0;
+    transition: 0.5s;
+    color: white;
+}
+</style>
+
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <div class="menu-item" onclick="loadStudents()">
+        <div class="icon">👨</div>
+        <div class="text">Students</div>
+    </div>
+
+    <div class="menu-item" onclick="loadCompanies()">
+        <div class="icon">🏢</div>
+        <div class="text">Companies</div>
+    </div>
+
+    <div class="menu-item" onclick="loadPlaced()">
+        <div class="icon">✅</div>
+        <div class="text">Placed</div>
+    </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+<h1>Placement Dashboard</h1>
+<p id="stats"></p>
+
+<div class="card">
+    <h3>Add Student</h3>
+    <input id="sname" placeholder="Name">
+    <input id="sbranch" placeholder="Branch">
+    <input id="scgpa" placeholder="CGPA">
+    <input id="semail" placeholder="Email">
+    <br>
+    <button class="action" onclick="addStudent()">Add</button>
+</div>
+
+<div class="card">
+    <h3>Add Company</h3>
+    <input id="cname" placeholder="Company Name">
+    <input id="ccgpa" placeholder="Min CGPA">
+    <br>
+    <button class="action" onclick="addCompany()">Add</button>
+</div>
+
+<div class="card">
+    <h3>Eligibility</h3>
+    <input id="cid" placeholder="Company ID">
+    <button class="action" onclick="checkEligibility()">Check</button>
+</div>
+
+<div class="card">
+    <h3>Add Placement</h3>
+    <input id="sid" placeholder="Student ID">
+    <input id="comp" placeholder="Company ID">
+    <input id="pkg" placeholder="Package">
+    <br>
+    <button class="action" onclick="addPlacement()">Add</button>
+</div>
+
+<div class="card">
+    <h3>Output</h3>
+    <div id="output"></div>
+</div>
+
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+const API = "http://localhost:5000";
+
+function showToast(msg){
+    const t = document.getElementById("toast");
+    t.innerText = msg;
+
+    if(msg.includes("❌") || msg.toLowerCase().includes("error")){
+        t.style.background = "#ef4444";
+    } else {
+        t.style.background = "#22c55e";
+    }
+
+    t.style.opacity = 1;
+    setTimeout(()=> t.style.opacity = 0, 2000);
+}
+
+// STUDENTS
+function loadStudents(){
+fetch(API+"/students").then(r=>r.json()).then(d=>{
+let h="<table><tr><th>Name</th><th>CGPA</th><th>Status</th></tr>";
+d.forEach(s=>{
+let color = s.PlacedStatus=='Placed'?'lightgreen':'orange';
+h+=`<tr><td>${s.Name}</td><td>${s.CGPA}</td><td style="color:${color}">${s.PlacedStatus}</td></tr>`;
+});
+output.innerHTML=h+"</table>";
+stats.innerText="Total Students: "+d.length;
+showToast("Students Loaded ✅");
+});
+}
+
+// COMPANIES
+function loadCompanies(){
+fetch(API+"/companies").then(r=>r.json()).then(d=>{
+let h="<table><tr><th>ID</th><th>Name</th><th>Min CGPA</th></tr>";
+d.forEach(c=>{
+h+=`<tr><td>${c.CompanyID}</td><td>${c.CompanyName}</td><td>${c.MinCGPA}</td></tr>`;
+});
+output.innerHTML=h+"</table>";
+showToast("Companies Loaded ✅");
+});
+}
+
+// PLACED
+function loadPlaced(){
+fetch(API+"/placed").then(r=>r.json()).then(d=>{
+let h="<table><tr><th>Name</th><th>Company</th><th>Package</th></tr>";
+d.forEach(p=>{
+h+=`<tr><td>${p.Name}</td><td>${p.CompanyName}</td><td>${p.Package}</td></tr>`;
+});
+output.innerHTML=h+"</table>";
+showToast("Placed Students Loaded ✅");
+});
+}
+
+// ADD STUDENT
+function addStudent(){
+
+if(!sname.value || !sbranch.value || !scgpa.value || !semail.value){
+    showToast("All fields required ❌");
+    return;
+}
+
+if(scgpa.value < 0 || scgpa.value > 10){
+    showToast("CGPA must be between 0-10 ❌");
+    return;
+}
+
+if(!semail.value.includes("@")){
+    showToast("Invalid Email ❌");
+    return;
+}
+
+fetch(API+"/add-student",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+name:sname.value,
+branch:sbranch.value,
+cgpa:scgpa.value,
+email:semail.value
+})
+}).then(r=>r.json()).then(d=>{
+showToast(d.message);
+sname.value=""; sbranch.value=""; scgpa.value=""; semail.value="";
+loadStudents();
+});
+}
+
+// ADD COMPANY
+function addCompany(){
+
+if(!cname.value || !ccgpa.value){
+    showToast("All fields required ❌");
+    return;
+}
+
+fetch(API+"/add-company",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+name:cname.value,
+cgpa:ccgpa.value
+})
+}).then(r=>r.json()).then(d=>{
+showToast(d.message);
+cname.value=""; ccgpa.value="";
+});
+}
+
+// ELIGIBILITY
+function checkEligibility(){
+
+if(!cid.value){
+    showToast("Enter Company ID ❌");
+    return;
+}
+
+fetch(API+"/eligible/"+cid.value).then(r=>r.json()).then(d=>{
+let h="<table><tr><th>Name</th><th>CGPA</th></tr>";
+d.forEach(s=>{
+h+=`<tr><td>${s.Name}</td><td>${s.CGPA}</td></tr>`;
+});
+output.innerHTML=h+"</table>";
+showToast("Eligibility Checked ✅");
+});
+}
+
+// ADD PLACEMENT
+function addPlacement(){
+
+if(!sid.value || !comp.value || !pkg.value){
+    showToast("All fields required ❌");
+    return;
+}
+
+fetch(API+"/add-placement",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+studentId:sid.value,
+companyId:comp.value,
+package:pkg.value
+})
+}).then(r=>r.json()).then(d=>{
+showToast(d.message);
+sid.value=""; comp.value=""; pkg.value="";
+loadStudents();
+});
+}
+</script>
+
+</body>
+</html>
